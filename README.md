@@ -445,6 +445,152 @@ GET /Api/GetRelatedMovies?movieId=12345
 
 ---
 
+## 8. جستجوی فیلم‌ها
+
+### 🔎 GET `/Api/Search`
+
+جستجو در فیلم‌ها بر اساس نام فارسی یا انگلیسی با قابلیت صفحه‌بندی.
+
+**Parameters (Query String):**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| q | string | ✅ | - | کوئری جستجو (نام فیلم به فارسی یا انگلیسی) |
+| page | int | ❌ | 1 | شماره صفحه مورد نظر |
+| pageSize | int | ❌ | 18 | تعداد نتایج در هر صفحه (حداکثر: 50) |
+
+**Example Requests:**
+
+```
+# جستجوی ساده
+GET /Api/Search?q=avengers
+
+# جستجو با صفحه‌بندی
+GET /Api/Search?q=spider&page=2&pageSize=12
+
+# جستجوی فارسی
+GET /Api/Search?q=انتقام‌جویان
+
+# جستجو با تنظیمات کامل
+GET /Api/Search?q=batman&page=1&pageSize=20
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "Success": true,
+  "SearchQuery": "avengers",
+  "Movies": [
+    {
+      "MovieId": 123,
+      "Name": "The-Avengers",
+      "NameFa": "انتقام‌جویان",
+      "Poster": "https://cdn.yoozmovie.com/posters/avengers.jpg",
+      "Year": 2012,
+      "Rate": 8.0,
+      "Imdb": "tt0848228"
+    },
+    {
+      "MovieId": 456,
+      "Name": "Avengers-Age-of-Ultron",
+      "NameFa": "انتقام‌جویان: عصر اولترون",
+      "Poster": "https://cdn.yoozmovie.com/posters/avengers2.jpg",
+      "Year": 2015,
+      "Rate": 7.3,
+      "Imdb": "tt2395427"
+    }
+  ],
+  "Page": 1,
+  "PageSize": 18,
+  "TotalPages": 3,
+  "TotalMovies": 47,
+  "HasNextPage": true,
+  "HasPreviousPage": false
+}
+```
+
+**Empty Results Response (200 OK):**
+
+```json
+{
+  "Success": true,
+  "SearchQuery": "nonexistentmovie",
+  "Movies": [],
+  "Page": 1,
+  "PageSize": 18,
+  "TotalPages": 0,
+  "TotalMovies": 0,
+  "HasNextPage": false,
+  "HasPreviousPage": false
+}
+```
+
+**Error Response (400 Bad Request):**
+
+```json
+{
+  "success": false,
+  "message": "Search query is required"
+}
+```
+
+**Server Error Response (500 Internal Server Error):**
+
+```json
+{
+  "success": false,
+  "message": "An error occurred: [error details]"
+}
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| Success | bool | وضعیت موفقیت درخواست |
+| SearchQuery | string | کوئری جستجوی دریافت شده |
+| Movies | array | آرایه‌ای از فیلم‌های یافت شده |
+| Movies[].MovieId | int | شناسه یکتای فیلم |
+| Movies[].Name | string | نام انگلیسی فیلم (با خط تیره برای URL) |
+| Movies[].NameFa | string | نام فارسی فیلم |
+| Movies[].Poster | string | URL کامل پوستر فیلم |
+| Movies[].Year | int | سال تولید فیلم |
+| Movies[].Rate | double | امتیاز IMDB |
+| Movies[].Imdb | string | شناسه IMDB فیلم |
+| Page | int | شماره صفحه فعلی |
+| PageSize | int | تعداد نتایج در هر صفحه |
+| TotalPages | int | تعداد کل صفحات |
+| TotalMovies | int | تعداد کل فیلم‌های یافت شده |
+| HasNextPage | bool | آیا صفحه بعدی وجود دارد؟ |
+| HasPreviousPage | bool | آیا صفحه قبلی وجود دارد؟ |
+
+**Business Logic:**
+
+1. ✅ جستجو در هر دو فیلد `name` (انگلیسی) و `name_fa` (فارسی) انجام می‌شود
+2. ✅ فقط فیلم‌هایی که `SendMovie != null` هستند نمایش داده می‌شوند
+3. ✅ نتایج بر اساس `movieId` به صورت نزولی مرتب می‌شوند (جدیدترین‌ها اول)
+4. ✅ اعتبارسنجی پارامترها:
+   - `page` باید بزرگتر از 0 باشد (پیش‌فرض: 1)
+   - `pageSize` بین 1 تا 50 (پیش‌فرض: 18)
+   - `q` نمی‌تواند خالی باشد
+5. ✅ در صورت عدم یافتن نتیجه، آرایه `Movies` خالی برگردانده می‌شود
+
+**Possible Error Messages:**
+
+- `"Search query is required"` - کوئری جستجو خالی است
+- `"An error occurred: [details]"` - خطای سرور
+
+**Use Cases:**
+
+- 🎬 جستجوی سریع فیلم در وب‌سایت
+- 📱 اپلیکیشن‌های موبایل (iOS/Android)
+- 💡 پیشنهاد خودکار (Autocomplete) هنگام تایپ
+- 🔗 ویجت جستجو در سایت‌های شخص ثالث
+- 📊 تحلیل و آمار جستجوها
+
+---
+
 ## 🔐 Authentication & Security
 
 ### IP Tracking
